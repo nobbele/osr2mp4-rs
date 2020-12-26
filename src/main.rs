@@ -170,9 +170,12 @@ fn draw_slider(
             .map(|p| glam::vec2(p.0 as f32, p.1 as f32)),
     );
 
-    if let libosu::SliderSplineKind::Bezier = slider.kind {
-        points = curves::get_bezier(points);
-    };
+    match slider.kind {
+        libosu::SliderSplineKind::Bezier => points = curves::get_bezier(points),
+        libosu::SliderSplineKind::Perfect => points = curves::get_perfect(points),
+        // TODO Catmull
+        _ => {},
+    }
 
     let end_point = points[points.len() - 1];
     let second_to_last_end_point = points[points.len() - 2];
@@ -252,7 +255,7 @@ fn draw_slider(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let before = std::time::Instant::now();
     let replay =
-        libosu::Replay::parse(BufReader::new(std::fs::File::open("replay2.osr").unwrap())).unwrap();
+        libosu::Replay::parse(BufReader::new(std::fs::File::open("replay.osr").unwrap())).unwrap();
 
     let map_data = {
         let osudb = libosu::OsuDB::parse(BufReader::new(
