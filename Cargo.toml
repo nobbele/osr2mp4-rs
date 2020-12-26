@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 ggez = "0.5.1"
+glam = { version = "0.11.2", features = ["mint"] }
 libosu = { git = "https://github.com/nobbele/libosu", default-features = false }
 
 [profile.dev]

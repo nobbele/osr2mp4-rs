@@ -10,7 +10,7 @@ use std::{io::BufReader, path::Path, println};
 mod curves;
 mod encoder;
 
-const DRAW_TO_VIDEO: bool = true;
+const DRAW_TO_VIDEO: bool = false;
 
 pub struct Game {
     pub cursor_pos: (f32, f32),
@@ -161,51 +161,43 @@ fn draw_slider(
     slider: SliderData,
 ) {
     draw_circle(ctx, map_data, current_ms, object);
-    let points_it = std::iter::once(mint::Point2 {
-        x: object.pos.0 as f32,
-        y: object.pos.1 as f32,
-    })
-    .chain(slider.control.iter().map(|p| mint::Point2 {
-        x: p.0 as f32,
-        y: p.1 as f32,
-    }));
+    let mut points = Vec::with_capacity(slider.control.len() + 1);
+    points.push(glam::vec2(object.pos.0 as f32, object.pos.1 as f32));
+    points.extend(
+        slider
+            .control
+            .iter()
+            .map(|p| glam::vec2(p.0 as f32, p.1 as f32)),
+    );
 
-    let points = if let libosu::SliderSplineKind::Bezier = slider.kind {
-        curves::get_bezier(points_it.map(|p| curves::Point(p)).collect())
-            .into_iter()
-            .map(|p| p.0)
-            .collect()
-    } else {
-        points_it.collect::<Vec<_>>()
+    if let libosu::SliderSplineKind::Bezier = slider.kind {
+        points = curves::get_bezier(points);
     };
 
     let end_point = points[points.len() - 1];
     let second_to_last_end_point = points[points.len() - 2];
-    let end_direction = (end_point.y - second_to_last_end_point.y).atan2(end_point.x - second_to_last_end_point.x) + std::f32::consts::FRAC_PI_2;
-    let end_offset = mint::Point2 {
-        x: end_direction.cos() * map_data.cs_osupixels,
-        y: end_direction.sin() * map_data.cs_osupixels,
-    };
+    let end_direction = (end_point.y - second_to_last_end_point.y)
+        .atan2(end_point.x - second_to_last_end_point.x)
+        + std::f32::consts::FRAC_PI_2;
+    let end_offset = glam::vec2(
+        end_direction.cos() * map_data.cs_osupixels,
+        end_direction.sin() * map_data.cs_osupixels,
+    );
 
     ggez::graphics::MeshBuilder::new()
         .line(
             &points
                 .windows(2)
                 .map(|p| {
-                    let direction = (p[1].y - p[0].y).atan2(p[1].x - p[0].x) + std::f32::consts::FRAC_PI_2;
-                    let offset = mint::Point2 {
-                        x: direction.cos() * map_data.cs_osupixels,
-                        y: direction.sin() * map_data.cs_osupixels,
-                    };
-                    mint::Point2 {
-                        x: p[0].x + offset.x,
-                        y: p[0].y + offset.y,
-                    }
+                    let direction =
+                        (p[1].y - p[0].y).atan2(p[1].x - p[0].x) + std::f32::consts::FRAC_PI_2;
+                    let offset = glam::vec2(
+                        direction.cos() * map_data.cs_osupixels,
+                        direction.sin() * map_data.cs_osupixels,
+                    );
+                    p[0] + offset
                 })
-                .chain(std::iter::once(mint::Point2 {
-                    x: end_point.x + end_offset.x,
-                    y: end_point.y + end_offset.y,
-                }))
+                .chain(std::iter::once(end_point + end_offset))
                 .collect::<Vec<_>>(),
             1.0,
             Color {
@@ -220,20 +212,15 @@ fn draw_slider(
             &points
                 .windows(2)
                 .map(|p| {
-                    let direction = (p[1].y - p[0].y).atan2(p[1].x - p[0].x) + std::f32::consts::FRAC_PI_2;
-                    let offset = mint::Point2 {
-                        x: direction.cos() * map_data.cs_osupixels,
-                        y: direction.sin() * map_data.cs_osupixels,
-                    };
-                    mint::Point2 {
-                        x: p[0].x - offset.x,
-                        y: p[0].y - offset.y,
-                    }
+                    let direction =
+                        (p[1].y - p[0].y).atan2(p[1].x - p[0].x) + std::f32::consts::FRAC_PI_2;
+                    let offset = glam::vec2(
+                        direction.cos() * map_data.cs_osupixels,
+                        direction.sin() * map_data.cs_osupixels,
+                    );
+                    p[0] - offset
                 })
-                .chain(std::iter::once(mint::Point2 {
-                    x: end_point.x - end_offset.x,
-                    y: end_point.y - end_offset.y,
-                }))
+                .chain(std::iter::once(end_point - end_offset))
                 .collect::<Vec<_>>(),
             1.0,
             Color {
@@ -246,10 +233,7 @@ fn draw_slider(
         .unwrap()
         .circle(
             DrawMode::fill(),
-            mint::Point2 {
-                x: end_point.x,
-                y: end_point.y,
-            },
+            end_point,
             map_data.cs_osupixels,
             1.0,
             Color {
@@ -268,7 +252,7 @@ fn draw_slider(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let before = std::time::Instant::now();
     let replay =
-        libosu::Replay::parse(BufReader::new(std::fs::File::open("replay.osr").unwrap())).unwrap();
+        libosu::Replay::parse(BufReader::new(std::fs::File::open("replay2.osr").unwrap())).unwrap();
 
     let map_data = {
         let osudb = libosu::OsuDB::parse(BufReader::new(
@@ -324,7 +308,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut running = true;
 
-    let mut current_ms = 0;
+    let mut current_ms = 6000;
     let mut current_action = replay_data_iter.next().unwrap();
     let mut current_action_ms = 0;
     'outer: while running {
@@ -350,7 +334,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             current_ms >= obj.start_time.as_milliseconds() - map_data.ar_ms
                 && match &obj.kind {
                     libosu::HitObjectKind::Circle => current_ms < obj.start_time.as_milliseconds(),
-                    libosu::HitObjectKind::Slider { duration, repeats, .. } => {
+                    libosu::HitObjectKind::Slider {
+                        duration, repeats, ..
+                    } => {
                         current_ms < obj.start_time.as_milliseconds() + (duration * repeats) as i32
                     }
                     libosu::HitObjectKind::Spinner { end_time } => {
@@ -484,7 +470,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     // Guaranteed to work since we successfully peeked
                     current_action = replay_data_iter.next().unwrap();
                     // Break if this is the last one as it's just garbage data
-                    if let None = replay_data_iter.peek() {
+                    if replay_data_iter.peek().is_none() {
                         break 'outer;
                     }
                 } else {

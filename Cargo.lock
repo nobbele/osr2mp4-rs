@@ -772,6 +772,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bef81f244b2a421ddb8ccb382857772379c0996fe5948992db5bee51cef3c28e"
+dependencies = [
+ "mint",
+ "version_check",
+]
+
+[[package]]
 name = "gleam"
 version = "0.6.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1500,6 +1510,7 @@ name = "osr2mp4-rs"
 version = "0.1.0"
 dependencies = [
  "ggez",
+ "glam",
  "libosu",
 ]
 
