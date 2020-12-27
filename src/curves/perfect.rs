@@ -26,7 +26,7 @@ pub fn get_perfect(control_points: Vec<Vec2>) -> Vec<Vec2> {
     // If we have a degenerate triangle with an almost-zero size, then give up and fall
     // back to a more numerically stable method.
     if sum == 0.0 {
-        return Vec::new()
+        return Vec::new();
     }
 
     let center = (s * a + t * b + u * c) / sum;
@@ -52,8 +52,7 @@ pub fn get_perfect(control_points: Vec<Vec2>) -> Vec<Vec2> {
         vec2(n.y, -n.x)
     };
 
-    if (ortho_a_to_c).dot(b - a) < 0.0
-    {
+    if (ortho_a_to_c).dot(b - a) < 0.0 {
         dir = -dir;
         theta_range = 2.0 * std::f32::consts::PI - theta_range;
     }
@@ -66,7 +65,9 @@ pub fn get_perfect(control_points: Vec<Vec2>) -> Vec<Vec2> {
     let amount_points = if 2.0 * r <= TOLERANCE {
         2
     } else {
-        (theta_range / ((1.0 - TOLERANCE / r).acos() * 2.0)).ceil().max(2.0) as usize
+        (theta_range / ((1.0 - TOLERANCE / r).acos() * 2.0))
+            .ceil()
+            .max(2.0) as usize
     };
 
     (0..amount_points)

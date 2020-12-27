@@ -28,8 +28,6 @@ impl Encoder {
                 &framerate.to_string(),
                 "-i",
                 "pipe:0",
-                "-vf",
-                "vflip",
                 "-vcodec",
                 "libx264",
                 "-r",

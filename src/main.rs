@@ -4,13 +4,12 @@ use ggez::{
     graphics::{drawable_size, Color, DrawMode, DrawParam, Drawable, FillOptions, Rect},
     mint,
 };
+use glam::vec2;
 use libosu::HitObject;
 use std::{io::BufReader, path::Path, println};
 
 mod curves;
 mod encoder;
-
-const DRAW_TO_VIDEO: bool = false;
 
 pub struct Game {
     pub cursor_pos: (f32, f32),
@@ -59,54 +58,61 @@ fn draw_circle(
     current_ms: i32,
     object: &HitObject,
 ) {
-    ggez::graphics::Mesh::new_circle(
+    let hitcircle = ggez::graphics::Image::new(
         ctx,
-        DrawMode::fill(),
-        mint::Point2 { x: 0.0, y: 0.0 },
-        map_data.cs_osupixels,
-        1.0,
-        Color {
-            r: 0.0,
-            g: 1.0,
-            b: 0.0,
-            a: 1.0,
-        },
-    )
-    .unwrap()
-    .draw(
-        ctx,
-        DrawParam::new().dest(mint::Point2 {
-            x: object.pos.0 as f32,
-            y: object.pos.1 as f32,
-        }),
+        "/hitcircle.png",
     )
     .unwrap();
+    hitcircle
+        .draw(
+            ctx,
+            DrawParam::new()
+                .dest(vec2(object.pos.0 as f32, object.pos.1 as f32))
+                .offset(vec2(0.5, 0.5))
+                .scale(
+                    vec2(map_data.cs_osupixels * 2.0, map_data.cs_osupixels * 2.0) / vec2(hitcircle.dimensions().w, hitcircle.dimensions().h),
+                ),
+        )
+        .unwrap();
+
+    let hitcircleoverlay = ggez::graphics::Image::new(
+        ctx,
+        "/hitcircleoverlay.png",
+    )
+    .unwrap();
+    hitcircleoverlay
+        .draw(
+            ctx,
+            DrawParam::new()
+                .dest(vec2(object.pos.0 as f32, object.pos.1 as f32))
+                .offset(vec2(0.5, 0.5))
+                .scale(
+                    vec2(map_data.cs_osupixels * 2.0, map_data.cs_osupixels * 2.0) / vec2(hitcircleoverlay.dimensions().w, hitcircleoverlay.dimensions().h),
+                ),
+        )
+        .unwrap();
 
     let approach_circle_size =
         (object.start_time.as_milliseconds() - current_ms) as f32 / map_data.ar_ms as f32;
 
-    ggez::graphics::Mesh::new_circle(
+    let radius = map_data.cs_osupixels * (1.0 + approach_circle_size);
+
+    let approachcircle = ggez::graphics::Image::new(
         ctx,
-        DrawMode::stroke(1.0),
-        mint::Point2 { x: 0.0, y: 0.0 },
-        map_data.cs_osupixels * (1.0 + approach_circle_size),
-        1.0,
-        Color {
-            r: 1.0,
-            g: 0.0,
-            b: 0.0,
-            a: 1.0,
-        },
-    )
-    .unwrap()
-    .draw(
-        ctx,
-        DrawParam::new().dest(mint::Point2 {
-            x: object.pos.0 as f32,
-            y: object.pos.1 as f32,
-        }),
+        "/approachcircle.png",
     )
     .unwrap();
+    approachcircle
+        .draw(
+            ctx,
+            DrawParam::new()
+                .dest(vec2(object.pos.0 as f32, object.pos.1 as f32))
+                .offset(vec2(0.5, 0.5))
+                .scale(
+                    vec2(radius * 2.0, radius * 2.0) / vec2(approachcircle.dimensions().w, approachcircle.dimensions().h),
+                ),
+        )
+        .unwrap();
 }
 
 fn draw_spinner(
@@ -174,7 +180,7 @@ fn draw_slider(
         libosu::SliderSplineKind::Bezier => points = curves::get_bezier(points),
         libosu::SliderSplineKind::Perfect => points = curves::get_perfect(points),
         // TODO Catmull
-        _ => {},
+        _ => {}
     }
 
     let end_point = points[points.len() - 1];
@@ -235,7 +241,7 @@ fn draw_slider(
         )
         .unwrap()
         .circle(
-            DrawMode::fill(),
+            DrawMode::stroke(1.0),
             end_point,
             map_data.cs_osupixels,
             1.0,
@@ -246,6 +252,7 @@ fn draw_slider(
                 a: 1.0,
             },
         )
+        .unwrap()
         .build(ctx)
         .unwrap()
         .draw(ctx, DrawParam::new())
@@ -283,13 +290,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut replay_data_iter = replay.actions.into_iter().peekable();
 
-    let mut encoder = if DRAW_TO_VIDEO {
-        Some(Encoder::new(640, 480, 30))
-    } else {
-        None
-    };
+    let mut encoder = Encoder::new(640, 480, 30);
 
-    let (mut ctx, mut event_loop) = ggez::ContextBuilder::new("osr2mp4-rs", "nobbele")
+    let (mut ctx, _) = ggez::ContextBuilder::new("osr2mp4-rs", "nobbele")
         .window_mode(WindowMode {
             width: 640.0,
             height: 480.0,
@@ -300,8 +303,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             title: "osr2mp4-rs".to_owned(),
             ..WindowSetup::default()
         })
+        .add_zipfile_bytes(include_bytes!("../resources.zip").to_vec())
         .build()
         .unwrap();
+
+    ggez::filesystem::print_all(&mut ctx);
 
     let canvas = ggez::graphics::Canvas::with_window_size(&mut ctx).unwrap();
 
@@ -309,12 +315,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         cursor_pos: (0.0, 0.0),
     };
 
-    let mut running = true;
-
     let mut current_ms = 6000;
     let mut current_action = replay_data_iter.next().unwrap();
     let mut current_action_ms = 0;
-    'outer: while running {
+    'outer: loop {
         println!(
             "({}/{}). {:?}",
             current_ms, current_action_ms, current_action
@@ -447,24 +451,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .unwrap();
 
-        if !DRAW_TO_VIDEO {
-            ggez::graphics::set_canvas(&mut ctx, None);
-            ggez::graphics::draw(&mut ctx, &canvas, DrawParam::new()).unwrap();
-            event_loop.poll_events(|e| match e {
-                ggez::event::winit_event::Event::WindowEvent { event, .. } => match event {
-                    ggez::event::winit_event::WindowEvent::CloseRequested => {
-                        running = false;
-                    }
-                    _ => {}
-                },
-                _ => {}
-            });
-        }
         ggez::graphics::present(&mut ctx).unwrap();
 
-        if let Some(encoder) = &mut encoder {
-            encoder.encode(&canvas.image().to_rgba8(&mut ctx).unwrap());
-        }
+        encoder.encode(&canvas.image().to_rgba8(&mut ctx).unwrap());
 
         loop {
             if let Some(next) = replay_data_iter.peek() {
@@ -484,16 +473,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        if let Some(encoder) = &encoder {
-            current_ms += 1000 / encoder.framerate as i32;
-        } else {
-            current_ms += 1000 / 60;
-        }
+        current_ms += 1000 / encoder.framerate as i32
     }
 
-    if let Some(encoder) = encoder {
-        encoder.finish();
-    }
+    encoder.finish();
 
     println!("Finished in {} seconds", before.elapsed().as_secs_f32());
     Ok(())
