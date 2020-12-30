@@ -363,6 +363,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     repeats,
                     pixel_length,
                     duration,
+                    ..
                 } => draw_slider(
                     &mut ctx,
                     &map_data,

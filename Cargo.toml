@@ -10,7 +10,8 @@ build = "build-zip.rs"
 [dependencies]
 ggez = { git = "https://github.com/ggez/ggez", branch = "devel" }
 glam = { version = "0.11.2", features = ["mint"] }
-libosu = { git = "https://github.com/nobbele/libosu", default-features = false }
+# libosu = { git = "https://github.com/iptq/libosu", features = ["replay"] }
+libosu = { version = "0.0.10", features = ["replay"] }
 
 [build-dependencies]
 fs_extra = "1.2.0"
