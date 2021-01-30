@@ -1,5 +1,5 @@
 use ggez::graphics::{Color, DrawMode, DrawParam, Drawable};
-use libosu::{prelude::{HitObject, SliderInfo}};
+use libosu::prelude::{HitObject, SliderInfo};
 
 use crate::BeatmapData;
 
@@ -15,10 +15,11 @@ pub fn draw_slider(
     draw_circle(ctx, map_data, current_ms, object);
 
     let points = libosu::spline::Spline::from_control(
-        slider.kind, 
-        &slider.control_points, 
-        Some(slider.pixel_length)
-    ).spline_points;
+        slider.kind,
+        &slider.control_points,
+        Some(slider.pixel_length),
+    )
+    .spline_points;
 
     let end_point = points[points.len() - 1];
     let second_to_last_end_point = points[points.len() - 2];
@@ -44,9 +45,7 @@ pub fn draw_slider(
                     p[0] + offset
                 })
                 .chain(std::iter::once(end_point + end_offset))
-                .map(|p| {
-                    glam::vec2(p.x as f32, p.y as f32)
-                })
+                .map(|p| glam::vec2(p.x as f32, p.y as f32))
                 .collect::<Vec<_>>(),
             1.0,
             Color {
@@ -70,9 +69,7 @@ pub fn draw_slider(
                     p[0] - offset
                 })
                 .chain(std::iter::once(end_point - end_offset))
-                .map(|p| {
-                    glam::vec2(p.x as f32, p.y as f32)
-                })
+                .map(|p| glam::vec2(p.x as f32, p.y as f32))
                 .collect::<Vec<_>>(),
             1.0,
             Color {
