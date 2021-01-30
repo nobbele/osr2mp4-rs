@@ -10,11 +10,7 @@ pub fn draw_circle(
     current_ms: i32,
     object: &HitObject,
 ) {
-    let hitcircle = ggez::graphics::Image::new(
-        ctx,
-        "/hitcircle.png",
-    )
-    .unwrap();
+    let hitcircle = ggez::graphics::Image::new(ctx, "/hitcircle.png").unwrap();
     hitcircle
         .draw(
             ctx,
@@ -22,16 +18,13 @@ pub fn draw_circle(
                 .dest(vec2(object.pos.x as f32, object.pos.y as f32))
                 .offset(vec2(0.5, 0.5))
                 .scale(
-                    vec2(map_data.cs_osupixels * 2.0, map_data.cs_osupixels * 2.0) / vec2(hitcircle.dimensions().w, hitcircle.dimensions().h),
+                    vec2(map_data.cs_osupixels * 2.0, map_data.cs_osupixels * 2.0)
+                        / vec2(hitcircle.dimensions().w, hitcircle.dimensions().h),
                 ),
         )
         .unwrap();
 
-    let hitcircleoverlay = ggez::graphics::Image::new(
-        ctx,
-        "/hitcircleoverlay.png",
-    )
-    .unwrap();
+    let hitcircleoverlay = ggez::graphics::Image::new(ctx, "/hitcircleoverlay.png").unwrap();
     hitcircleoverlay
         .draw(
             ctx,
@@ -39,21 +32,20 @@ pub fn draw_circle(
                 .dest(vec2(object.pos.x as f32, object.pos.y as f32))
                 .offset(vec2(0.5, 0.5))
                 .scale(
-                    vec2(map_data.cs_osupixels * 2.0, map_data.cs_osupixels * 2.0) / vec2(hitcircleoverlay.dimensions().w, hitcircleoverlay.dimensions().h),
+                    vec2(map_data.cs_osupixels * 2.0, map_data.cs_osupixels * 2.0)
+                        / vec2(
+                            hitcircleoverlay.dimensions().w,
+                            hitcircleoverlay.dimensions().h,
+                        ),
                 ),
         )
         .unwrap();
 
-    let approach_circle_size =
-        (object.start_time.as_seconds().as_millis().0 - current_ms) as f32 / map_data.ar_ms as f32;
+    let approach_circle_size = (object.start_time.0 - current_ms) as f32 / map_data.ar_ms as f32;
 
     let radius = map_data.cs_osupixels * (1.0 + approach_circle_size);
 
-    let approachcircle = ggez::graphics::Image::new(
-        ctx,
-        "/approachcircle.png",
-    )
-    .unwrap();
+    let approachcircle = ggez::graphics::Image::new(ctx, "/approachcircle.png").unwrap();
     approachcircle
         .draw(
             ctx,
@@ -61,7 +53,8 @@ pub fn draw_circle(
                 .dest(vec2(object.pos.x as f32, object.pos.y as f32))
                 .offset(vec2(0.5, 0.5))
                 .scale(
-                    vec2(radius * 2.0, radius * 2.0) / vec2(approachcircle.dimensions().w, approachcircle.dimensions().h),
+                    vec2(radius * 2.0, radius * 2.0)
+                        / vec2(approachcircle.dimensions().w, approachcircle.dimensions().h),
                 ),
         )
         .unwrap();

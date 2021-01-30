@@ -1,4 +1,7 @@
-use ggez::{graphics::{Color, DrawMode, DrawParam, Drawable, drawable_size}, mint};
+use ggez::{
+    graphics::{drawable_size, Color, DrawMode, DrawParam, Drawable},
+    mint,
+};
 use libosu::prelude::HitObject;
 
 use crate::BeatmapData;
