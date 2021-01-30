@@ -62,6 +62,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_zipfile_bytes(include_bytes!("../resources.zip").to_vec())
         .build()
         .unwrap();
+        
+    println!("Running a replay of {} playing {} [{}]", replay.player_username, map_data.beatmap.title, map_data.beatmap.difficulty_name);
 
     let player = player::Player::new(&mut ctx, replay, map_data, 30);
 

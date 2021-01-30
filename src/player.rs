@@ -188,8 +188,6 @@ impl EventHandler for Player {
                 .encode(&self.canvas.image().to_rgba8(ctx).unwrap());
         }
 
-        println!("calculating stuff");
-
         loop {
             if let Some(next) = self.replay_data_iter.peek() {
                 if self.current_ms >= self.current_action_ms as i32 + next.time as i32 {
