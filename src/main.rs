@@ -4,7 +4,7 @@ use ggez::{
 use helper::{ar_to_ms, cs_to_osupixels};
 use libosu::{
     beatmap::Beatmap,
-    db::OsuDB,
+    db::Db,
     replay::Replay,
 };
 use std::{io::BufReader, path::Path};
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let replay = Replay::parse(&mut BufReader::new(std::fs::File::open("replay.osr")?)).unwrap();
 
     let map_data = {
-        let osudb = OsuDB::parse(BufReader::new(
+        let osudb = Db::parse(BufReader::new(
             std::fs::File::open("C:\\Program Files\\osu!\\osu!.db").unwrap(),
         ))
         .unwrap();
