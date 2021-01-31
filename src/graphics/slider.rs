@@ -12,6 +12,7 @@ pub fn draw_slider(
     object: &HitObject,
     slider: &SliderInfo,
     combo_color: Color,
+    combo_index: u8,
 ) {
     let mut points = Vec::with_capacity(slider.control_points.len() + 1);
     points.push(object.pos);
@@ -116,5 +117,5 @@ pub fn draw_slider(
         .draw(ctx, DrawParam::new())
         .unwrap();
 
-    draw_circle(ctx, map_data, current_ms, object, combo_color);
+    draw_circle(ctx, map_data, current_ms, object, combo_color, combo_index);
 }

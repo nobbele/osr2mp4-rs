@@ -58,7 +58,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             title: "osr2mp4-rs".to_owned(),
             ..WindowSetup::default()
         })
-        .add_zipfile_bytes(include_bytes!("../resources.zip").to_vec())
+        .add_resource_path("C:\\Program Files\\osu!")
         .build()
         .unwrap();
 

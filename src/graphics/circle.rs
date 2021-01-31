@@ -1,4 +1,4 @@
-use ggez::graphics::{Color, DrawParam, Drawable};
+use ggez::graphics::{Color, DrawParam, Drawable, Text};
 use glam::vec2;
 use libosu::prelude::HitObject;
 
@@ -10,8 +10,10 @@ pub fn draw_circle(
     current_ms: i32,
     object: &HitObject,
     combo_color: Color,
+    combo_index: u8,
 ) {
-    let hitcircle = ggez::graphics::Image::new(ctx, "/hitcircle.png").unwrap();
+    let hitcircle =
+        ggez::graphics::Image::new(ctx, "/Skins/Varvalian 2019-06-25/hitcircle.png").unwrap();
     hitcircle
         .draw(
             ctx,
@@ -25,7 +27,9 @@ pub fn draw_circle(
         )
         .unwrap();
 
-    let hitcircleoverlay = ggez::graphics::Image::new(ctx, "/hitcircleoverlay.png").unwrap();
+    let hitcircleoverlay =
+        ggez::graphics::Image::new(ctx, "/Skins/Varvalian 2019-06-25/hitcircleoverlay.png")
+            .unwrap();
     hitcircleoverlay
         .draw(
             ctx,
@@ -47,7 +51,8 @@ pub fn draw_circle(
 
     let radius = map_data.cs_osupixels * (1.0 + approach_circle_size);
 
-    let approachcircle = ggez::graphics::Image::new(ctx, "/approachcircle.png").unwrap();
+    let approachcircle =
+        ggez::graphics::Image::new(ctx, "/Skins/Varvalian 2019-06-25/approachcircle.png").unwrap();
     approachcircle
         .draw(
             ctx,
@@ -59,6 +64,28 @@ pub fn draw_circle(
                         / vec2(approachcircle.dimensions().w, approachcircle.dimensions().h),
                 )
                 .color(combo_color),
+        )
+        .unwrap();
+
+    let combo_number = if combo_index < 10 {
+        ggez::graphics::Image::new(
+            ctx,
+            format!("/Skins/Varvalian 2019-06-25/combo-{}.png", combo_index),
+        )
+        .unwrap()
+    } else {
+        ggez::graphics::Image::new(ctx, "/Skins/Varvalian 2019-06-25/ranking-B.png").unwrap()
+    };
+    combo_number
+        .draw(
+            ctx,
+            DrawParam::new()
+                .dest(vec2(object.pos.x as f32, object.pos.y as f32))
+                .offset(vec2(0.5, 0.5))
+                .scale(
+                    vec2(map_data.cs_osupixels, map_data.cs_osupixels)
+                        / vec2(combo_number.dimensions().w, combo_number.dimensions().h),
+                ),
         )
         .unwrap();
 }

@@ -1,4 +1,4 @@
-use std::{iter::Peekable, str::FromStr};
+use std::iter::Peekable;
 
 use ggez::{
     audio::SoundSource,
@@ -19,8 +19,9 @@ pub struct Player {
     current_action_ms: i32,
     current_action: ReplayAction,
     replay_data_iter: Peekable<std::vec::IntoIter<ReplayAction>>,
-    combo_index: usize,
-    was_prev_first_new_combo: bool,
+    combo_color_index: usize,
+    combo_index: u8,
+    prev_obj_time: TimestampMillis,
 
     fps: i32,
     paused: bool,
@@ -42,12 +43,13 @@ impl Player {
             .into_iter()
             .peekable();
         Self {
-            current_ms: 6000,
+            current_ms: 0,
             current_action_ms: 0,
             current_action: iter.next().expect("Replay is empty"),
             replay_data_iter: iter,
+            combo_color_index: 0,
             combo_index: 0,
-            was_prev_first_new_combo: false,
+            prev_obj_time: TimestampMillis(0),
 
             fps,
             paused: false,
@@ -101,7 +103,7 @@ impl EventHandler for Player {
 
     fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
         if !self.paused {
-            self.current_ms = self.music.elapsed().as_millis() as i32;
+            self.current_ms = 29216 - self.music.elapsed().as_millis() as i32;
         }
 
         Ok(())
@@ -179,27 +181,47 @@ impl EventHandler for Player {
             iter
         };
 
-        if let Some(first_new_combo) = active_object_iter.peek().map(|o| o.new_combo) {
-            if first_new_combo && !self.was_prev_first_new_combo {
-                self.combo_index = (self.combo_index + 1) % self.map_data.beatmap.colors.len();
+        if let Some(first_obj) = active_object_iter.peek() {
+            if first_obj.start_time != self.prev_obj_time {
+                self.combo_index += 1;
+                if first_obj.new_combo {
+                    self.combo_color_index =
+                        (self.combo_color_index + 1) % self.map_data.beatmap.colors.len();
+                    self.combo_index = 0;
+                }
             }
-            self.was_prev_first_new_combo = first_new_combo;
+            self.prev_obj_time = first_obj.start_time;
         }
 
+        let mut active_combo_color_index = self.combo_color_index;
         let mut active_combo_index = self.combo_index;
         for (i, object) in active_object_iter.enumerate() {
             if object.new_combo && i != 0 {
-                active_combo_index = (active_combo_index + 1) % self.map_data.beatmap.colors.len()
+                active_combo_color_index =
+                    (active_combo_color_index + 1) % self.map_data.beatmap.colors.len();
+                active_combo_index = 0;
             }
-            let color = self.map_data.beatmap.colors[active_combo_index];
+            active_combo_index += 1;
+            let color = self.map_data.beatmap.colors[active_combo_color_index];
             let color = Color::from_rgb(color.red, color.green, color.blue);
             match &object.kind {
-                HitObjectKind::Circle => {
-                    draw_circle(ctx, &self.map_data, self.current_ms, object, color)
-                }
-                HitObjectKind::Slider(info) => {
-                    draw_slider(ctx, &self.map_data, self.current_ms, object, info, color)
-                }
+                HitObjectKind::Circle => draw_circle(
+                    ctx,
+                    &self.map_data,
+                    self.current_ms,
+                    object,
+                    color,
+                    active_combo_index,
+                ),
+                HitObjectKind::Slider(info) => draw_slider(
+                    ctx,
+                    &self.map_data,
+                    self.current_ms,
+                    object,
+                    info,
+                    color,
+                    active_combo_index,
+                ),
                 HitObjectKind::Spinner(..) => {
                     draw_spinner(ctx, &self.map_data, self.current_ms, &object)
                 }
@@ -242,38 +264,49 @@ impl EventHandler for Player {
         )
         .unwrap();
 
-        ggez::graphics::Mesh::new_rectangle(
-            ctx,
-            DrawMode::Fill(FillOptions::DEFAULT),
-            Rect {
-                x: 0.0,
-                y: 0.0,
-                w: 10.0,
-                h: 10.0,
-            },
-            Color {
-                r: 1.0,
-                g: 0.0,
-                b: 0.0,
-                a: 1.0,
-            },
-        )
-        .unwrap()
-        .draw(
-            ctx,
-            DrawParam::new().dest(mint::Point2 {
-                x: match self.current_action.buttons {
-                    Buttons::K1 => 0.0,
-                    Buttons::K2 => 10.0,
-                    Buttons::M1 => 20.0,
-                    Buttons::M2 => 30.0,
-                    Buttons::SMOKE => 40.0,
-                    _ => -10.0,
+        for &button in [
+            Buttons::K1,
+            Buttons::K2,
+            Buttons::M1,
+            Buttons::M2,
+            Buttons::SMOKE,
+        ]
+        .iter()
+        .filter(|&&b| self.current_action.buttons.contains(b))
+        {
+            ggez::graphics::Mesh::new_rectangle(
+                ctx,
+                DrawMode::Fill(FillOptions::DEFAULT),
+                Rect {
+                    x: 0.0,
+                    y: 0.0,
+                    w: 10.0,
+                    h: 10.0,
                 },
-                y: 0.0,
-            }),
-        )
-        .unwrap();
+                Color {
+                    r: 1.0,
+                    g: 0.0,
+                    b: 0.0,
+                    a: 1.0,
+                },
+            )
+            .unwrap()
+            .draw(
+                ctx,
+                DrawParam::new().dest(mint::Point2 {
+                    x: match button {
+                        Buttons::K1 => 0.0,
+                        Buttons::K2 => 10.0,
+                        //Buttons::M1 => 20.0, mouse buttons are broken for some reason
+                        //Buttons::M2 => 30.0,
+                        Buttons::SMOKE => 40.0,
+                        _ => -10.0,
+                    },
+                    y: 0.0,
+                }),
+            )
+            .unwrap();
+        }
 
         ggez::graphics::present(ctx).unwrap();
 

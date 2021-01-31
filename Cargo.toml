@@ -3,7 +3,6 @@ name = "osr2mp4-rs"
 version = "0.1.0"
 authors = ["Nobbele <realnobbele@gmail.com>"]
 edition = "2018"
-build = "build-zip.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
