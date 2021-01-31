@@ -73,7 +73,13 @@ impl EventHandler for Player {
         Ok(())
     }
 
-    fn key_down_event(&mut self, _ctx: &mut Context, keycode: ggez::event::KeyCode, _keymods: ggez::event::KeyMods, _repeat: bool) {
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        keycode: ggez::event::KeyCode,
+        _keymods: ggez::event::KeyMods,
+        _repeat: bool,
+    ) {
         if keycode == ggez::event::KeyCode::Space {
             self.paused = !self.paused;
         }
@@ -116,8 +122,7 @@ impl EventHandler for Player {
                                 current_ms < end_time.0
                             }
                         }
-                    }
-                )
+                })
                 .peekable();
             iter
         };
@@ -138,7 +143,9 @@ impl EventHandler for Player {
             let color = Color::from_rgb(color.red, color.green, color.blue);
             println!("{} {}", self.combo_index, active_combo_index);
             match &object.kind {
-                HitObjectKind::Circle => draw_circle(ctx, &self.map_data, self.current_ms, object, color),
+                HitObjectKind::Circle => {
+                    draw_circle(ctx, &self.map_data, self.current_ms, object, color)
+                }
                 HitObjectKind::Slider(info) => {
                     draw_slider(ctx, &self.map_data, self.current_ms, object, info, color)
                 }
