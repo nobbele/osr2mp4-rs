@@ -1,7 +1,10 @@
 use ggez::conf::{WindowMode, WindowSetup};
 use helper::{ar_to_ms, cs_to_osupixels};
 use libosu::{beatmap::Beatmap, db::Db, replay::Replay};
-use std::{io::BufReader, path::Path};
+use std::{
+    io::BufReader,
+    path::{Path, PathBuf},
+};
 
 mod encoder;
 mod graphics;
@@ -11,6 +14,7 @@ pub struct BeatmapData {
     pub beatmap: Beatmap,
     pub ar_ms: i32,
     pub cs_osupixels: f32,
+    pub folder: PathBuf,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -39,6 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ar_ms: ar_to_ms(beatmap.difficulty.approach_rate),
             cs_osupixels: cs_to_osupixels(beatmap.difficulty.circle_size),
             beatmap,
+            folder,
         }
     };
 

@@ -2,7 +2,7 @@ use std::iter::Peekable;
 
 use ggez::{
     event::{quit, EventHandler},
-    graphics::{Canvas, Color, DrawMode, DrawParam, Drawable, FillOptions, Rect},
+    graphics::{Canvas, Color, DrawMode, DrawParam, Drawable, FillOptions, Image, Rect},
     mint, Context,
 };
 use libosu::{prelude::*, replay::ReplayAction};
@@ -27,11 +27,12 @@ pub struct Player {
     encoder: Option<Encoder>,
     //canvas: Canvas,
     replay: Replay,
+    background: Image,
     map_data: BeatmapData,
 }
 
 impl Player {
-    pub fn new(_ctx: &mut Context, replay: Replay, map_data: BeatmapData, fps: i32) -> Self {
+    pub fn new(ctx: &mut Context, replay: Replay, map_data: BeatmapData, fps: i32) -> Self {
         let mut iter = replay
             .parse_action_data()
             .expect("Unable to parse replay")
@@ -52,6 +53,23 @@ impl Player {
             encoder: None,
             //canvas: ggez::graphics::Canvas::with_window_size(ctx).unwrap(),
             replay,
+            background: Image::from_bytes(
+                ctx,
+                &std::fs::read(
+                    map_data
+                        .beatmap
+                        .events
+                        .iter()
+                        .find_map(|item| match item {
+                            Event::Background(e) => Some(&e.filename),
+                            _ => None,
+                        })
+                        .map(|s| map_data.folder.join(s))
+                        .expect("No background image"),
+                )
+                .expect("Couldn't find beatmap background image"),
+            )
+            .expect("Couldn't load beatmap background image"),
             map_data,
         }
     }
@@ -98,6 +116,19 @@ impl EventHandler for Player {
                 a: 1.0,
             },
         );
+
+        self.background.draw(
+            ctx,
+            DrawParam::new().scale(
+                glam::vec2(
+                    ggez::graphics::drawable_size(ctx).0,
+                    ggez::graphics::drawable_size(ctx).1,
+                ) / glam::vec2(
+                    self.background.dimensions().w,
+                    self.background.dimensions().h,
+                ),
+            ),
+        )?;
 
         let mut active_object_iter = {
             let current_ms = self.current_ms;

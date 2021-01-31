@@ -57,7 +57,8 @@ pub fn draw_circle(
                 .scale(
                     vec2(radius * 2.0, radius * 2.0)
                         / vec2(approachcircle.dimensions().w, approachcircle.dimensions().h),
-                ),
+                )
+                .color(combo_color),
         )
         .unwrap();
 }
