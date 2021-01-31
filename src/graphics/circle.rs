@@ -1,4 +1,4 @@
-use ggez::graphics::{DrawParam, Drawable};
+use ggez::graphics::{Color, DrawParam, Drawable};
 use glam::vec2;
 use libosu::prelude::HitObject;
 
@@ -9,6 +9,7 @@ pub fn draw_circle(
     map_data: &BeatmapData,
     current_ms: i32,
     object: &HitObject,
+    combo_color: Color,
 ) {
     let hitcircle = ggez::graphics::Image::new(ctx, "/hitcircle.png").unwrap();
     hitcircle
@@ -37,7 +38,8 @@ pub fn draw_circle(
                             hitcircleoverlay.dimensions().w,
                             hitcircleoverlay.dimensions().h,
                         ),
-                ),
+                )
+                .color(combo_color),
         )
         .unwrap();
 

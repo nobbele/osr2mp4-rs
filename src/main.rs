@@ -1,12 +1,6 @@
-use ggez::{
-    conf::{WindowMode, WindowSetup},
-};
+use ggez::conf::{WindowMode, WindowSetup};
 use helper::{ar_to_ms, cs_to_osupixels};
-use libosu::{
-    beatmap::Beatmap,
-    db::Db,
-    replay::Replay,
-};
+use libosu::{beatmap::Beatmap, db::Db, replay::Replay};
 use std::{io::BufReader, path::Path};
 
 mod encoder;
@@ -62,8 +56,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_zipfile_bytes(include_bytes!("../resources.zip").to_vec())
         .build()
         .unwrap();
-        
-    println!("Running a replay of {} playing {} [{}]", replay.player_username, map_data.beatmap.title, map_data.beatmap.difficulty_name);
+
+    println!(
+        "Running a replay of {} playing {} [{}]",
+        replay.player_username, map_data.beatmap.title, map_data.beatmap.difficulty_name
+    );
 
     let player = player::Player::new(&mut ctx, replay, map_data, 30);
 
