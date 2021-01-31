@@ -1,6 +1,7 @@
-use std::iter::Peekable;
+use std::{iter::Peekable, str::FromStr};
 
 use ggez::{
+    audio::SoundSource,
     event::{quit, EventHandler},
     graphics::{Canvas, Color, DrawMode, DrawParam, Drawable, FillOptions, Image, Rect},
     mint, Context,
@@ -28,6 +29,7 @@ pub struct Player {
     //canvas: Canvas,
     replay: Replay,
     background: Image,
+    music: ggez::audio::Source,
     map_data: BeatmapData,
 }
 
@@ -70,6 +72,20 @@ impl Player {
                 .expect("Couldn't find beatmap background image"),
             )
             .expect("Couldn't load beatmap background image"),
+            music: {
+                let mut source = ggez::audio::Source::from_data(
+                    ctx,
+                    ggez::audio::SoundData::from_bytes(
+                        &std::fs::read(map_data.folder.join(&map_data.beatmap.audio_filename))
+                            .expect("Couldn't find beatmap music file"),
+                    ),
+                )
+                .expect("Couldn't load beatmap music file");
+                source.set_volume(0.1);
+                source.set_query_interval(std::time::Duration::from_millis(1000 / 60));
+                source.play(ctx).expect("Could not start music");
+                source
+            },
             map_data,
         }
     }
@@ -83,9 +99,9 @@ impl EventHandler for Player {
         false // false means quit
     }
 
-    fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
+    fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
         if !self.paused {
-            self.current_ms += ggez::timer::delta(ctx).as_millis() as i32;
+            self.current_ms = self.music.elapsed().as_millis() as i32;
         }
 
         Ok(())
@@ -100,6 +116,11 @@ impl EventHandler for Player {
     ) {
         if keycode == ggez::event::KeyCode::Space {
             self.paused = !self.paused;
+            if self.music.paused() {
+                self.music.resume();
+            } else {
+                self.music.pause();
+            }
         }
     }
 
@@ -172,7 +193,6 @@ impl EventHandler for Player {
             }
             let color = self.map_data.beatmap.colors[active_combo_index];
             let color = Color::from_rgb(color.red, color.green, color.blue);
-            println!("{} {}", self.combo_index, active_combo_index);
             match &object.kind {
                 HitObjectKind::Circle => {
                     draw_circle(ctx, &self.map_data, self.current_ms, object, color)

@@ -34,8 +34,7 @@ pub fn draw_slider(
     let body_points = points
         .windows(2)
         .map(|p| {
-            let direction =
-                (p[1].y - p[0].y).atan2(p[1].x - p[0].x) + std::f64::consts::FRAC_PI_2;
+            let direction = (p[1].y - p[0].y).atan2(p[1].x - p[0].x) + std::f64::consts::FRAC_PI_2;
             let offset = libosu::math::Point {
                 x: direction.cos() * map_data.cs_osupixels as f64,
                 y: direction.sin() * map_data.cs_osupixels as f64,
@@ -48,8 +47,8 @@ pub fn draw_slider(
             points
                 .windows(2)
                 .map(|p| {
-                    let direction = (p[1].y - p[0].y).atan2(p[1].x - p[0].x)
-                        + std::f64::consts::FRAC_PI_2;
+                    let direction =
+                        (p[1].y - p[0].y).atan2(p[1].x - p[0].x) + std::f64::consts::FRAC_PI_2;
                     let offset = libosu::math::Point {
                         x: direction.cos() * map_data.cs_osupixels as f64,
                         y: direction.sin() * map_data.cs_osupixels as f64,
@@ -92,17 +91,9 @@ pub fn draw_slider(
             stroke_color,
         )
         .unwrap()
-        .polyline(
-            DrawMode::fill(),
-            &body_points,
-            fill_color,
-        )
+        .polyline(DrawMode::fill(), &body_points, fill_color)
         .unwrap()
-        .polyline(
-            DrawMode::stroke(5.0),
-            &body_points,
-            stroke_color,
-        )
+        .polyline(DrawMode::stroke(5.0), &body_points, stroke_color)
         .unwrap()
         .circle(
             DrawMode::fill(),
